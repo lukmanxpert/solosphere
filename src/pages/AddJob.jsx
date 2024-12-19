@@ -3,10 +3,13 @@ import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { AuthContext } from '../providers/AuthProvider'
 import axios from 'axios'
+import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 
 const AddJob = () => {
   const { user } = useContext(AuthContext)
   const [startDate, setStartDate] = useState(new Date())
+  const navigate = useNavigate()
   const handleSubmit = async (e) => {
     e.preventDefault()
     const form = e.target;
@@ -30,8 +33,15 @@ const AddJob = () => {
       description,
       bid_count: 0
     }
-    const { data } = await axios.post(`${import.meta.env.VITE_server}/add-job`, formData)
-    console.log(data);
+    try {
+      await axios.post(`${import.meta.env.VITE_server}/add-job`, formData)
+      form.reset();
+      toast.success("Job Added Successfully")
+      navigate('/my-posted-jobs')
+    } catch (error) {
+      console.log(error.message);
+    }
+
   }
   return (
     <div className='flex justify-center items-center min-h-[calc(100vh-306px)] my-12'>
