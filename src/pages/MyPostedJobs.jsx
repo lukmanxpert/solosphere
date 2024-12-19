@@ -1,13 +1,49 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+import axios from 'axios';
+import { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom'
+import { AuthContext } from '../providers/AuthProvider';
+import { format } from 'date-fns';
+import toast from 'react-hot-toast';
 
 const MyPostedJobs = () => {
+  const { user } = useContext(AuthContext)
+  const [jobs, setJobs] = useState([]);
+  useEffect(() => {
+    loadData()
+  }, [user])
+  const loadData = async () => {
+    const { data } = await axios.get(`${import.meta.env.VITE_server}/jobs/${user?.email}`)
+    setJobs(data)
+  }
+  const handleDelete = async (id) => {
+    try {
+      toast(
+        (t) => (
+          <div className='flex justify-center items-center gap-2'>
+            <p className='text-red-600'>Want to delete ?</p>
+            <button className='text-red-600 border-2 rounded-xl p-1 border-red-600' onClick={async () => {
+              const { data } = await axios.delete(`${import.meta.env.VITE_server}/job/${id}`)
+              loadData()
+              console.log(data);
+              toast.dismiss(t.id)
+            }}>Delete</button>
+            <button className='text-green-400 border-2 rounded-xl p-1 border-green-400' onClick={() => toast.dismiss(t.id)}>Dismiss</button>
+          </div>
+        )
+      );
+    } catch (error) {
+      toast.error(error.message)
+    }
+  }
+  console.log(jobs);
   return (
     <section className='container px-4 mx-auto pt-12'>
       <div className='flex items-center gap-x-3'>
         <h2 className='text-lg font-medium text-gray-800 '>My Posted Jobs</h2>
 
         <span className='px-3 py-1 text-xs text-blue-600 bg-blue-100 rounded-full '>
-          4 Job
+          {jobs.length} Job
         </span>
       </div>
 
@@ -62,33 +98,33 @@ const MyPostedJobs = () => {
                   </tr>
                 </thead>
                 <tbody className='bg-white divide-y divide-gray-200 '>
-                  <tr>
+                  {jobs.map(job => <tr key={job._id}>
                     <td className='px-4 py-4 text-sm text-gray-500  whitespace-nowrap'>
-                      E-commerce Website Development
+                      {job.title}
                     </td>
 
                     <td className='px-4 py-4 text-sm text-gray-500  whitespace-nowrap'>
-                      28/05/2024
+                      {format(new Date(job.deadline), "P")}
                     </td>
 
                     <td className='px-4 py-4 text-sm text-gray-500  whitespace-nowrap'>
-                      $500-$600
+                      ${job.min_price}-${job.max_price}
                     </td>
                     <td className='px-4 py-4 text-sm whitespace-nowrap'>
                       <div className='flex items-center gap-x-2'>
                         <p
                           className={`px-3 py-1  text-blue-500 bg-blue-100/60 text-xs  rounded-full`}
                         >
-                          Web Development
+                          {job.category}
                         </p>
                       </div>
                     </td>
                     <td className='px-4 py-4 text-sm text-gray-500  whitespace-nowrap'>
-                      Dramatically redefine bleeding-edge...
+                      {job?.description ? job.description.substring(0, 17) + "..." : "No description"}
                     </td>
                     <td className='px-4 py-4 text-sm whitespace-nowrap'>
                       <div className='flex items-center gap-x-6'>
-                        <button className='text-gray-500 transition-colors duration-200   hover:text-red-500 focus:outline-none'>
+                        <button onClick={() => handleDelete(job._id)} className='text-gray-500 transition-colors duration-200   hover:text-red-500 focus:outline-none'>
                           <svg
                             xmlns='http://www.w3.org/2000/svg'
                             fill='none'
@@ -126,7 +162,7 @@ const MyPostedJobs = () => {
                         </Link>
                       </div>
                     </td>
-                  </tr>
+                  </tr>)}
                 </tbody>
               </table>
             </div>
